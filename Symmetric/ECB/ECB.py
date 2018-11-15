@@ -5,7 +5,6 @@ import os
 def get_key(config_file):
     config = configparser.ConfigParser()
     config.read(config_file)
-    print(config['KEY']['key'])
     return config['KEY']['key']
 
 def encrypt(message, key):
