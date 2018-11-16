@@ -4,12 +4,12 @@ import os
 import argparse
 
 # nargs for number of args, + means a list with an error message for empty input.
-parser = argparse.ArgumentParser(prog="python3 ECB.py", description="Encrypt or decrypt an image file (jpg) using ECB mode of AES")
-parser.add_argument('-e', '--encrypt', nargs="+", type=str, help="To encrypt the following image file")
-parser.add_argument('-d', '--decrypt', type=str, nargs="+", help="To decrypt the following image file")
-parser.print_help() # print help message by default
+parser = argparse.ArgumentParser(prog="python3 ECB.py", description="Encrypt or decrypt an image file (in .jpg) using ECB mode of AES")
+parser.add_argument('-e', '--encrypt', dest="file_to_encrypt", nargs="+", type=str, help="To encrypt the following image file")
+parser.add_argument('-d', '--decrypt', dest="file_to_decrypt", type=str, nargs="+", help="To decrypt the following image file")
+parser.add_argument('-o', '--output', dest="output_file", nargs=1, type=str, help="Output file of decryption", required=True)
+parser.add_argument('-c', '--config', dest="config_file", nargs=1, type=str, help="Config file(s) containing key", required=True)
 args = parser.parse_args()
-
 
 def get_key(config_file):
     config = configparser.ConfigParser()
@@ -58,27 +58,16 @@ def store_to_file(filename, header, tail):
     return
 
 def main():
-    command = input("Enter a command: ")
 
-    if len(command.split(" ")) != 3:
-        print("Usage: encrypt [file] [config file with key]")
-        exit(-1)
-
-    mode, file, config_file = command.split(" ")
-
-    if mode not in ("encrypt", "decrypt"):
-        print("Usage: encrypt [file] [config file with key]")
-        exit(-1)
-
-    if mode == "encrypt":
-        out_file = input("Enter output file name: ")
-        header, tail = get_bits_from_picture(file)
-        print("Getting the key....")
-        key = get_key(config_file)
-        print("Encrypting....")
-        enc = encrypt(tail, key)
-        store_to_file(out_file, header, enc)
-        print("Done!")
+    if args.file_to_encrypt:
+        for file in args.file_to_encrypt:
+            header, tail = get_bits_from_picture(file)
+            print("Getting the key....")
+            key = get_key(args.config_file)
+            print("Encrypting....")
+            enc = encrypt(tail, key)
+            store_to_file(args.output_file[0], header, enc)
+            print("Done!")
 
 if __name__ == "__main__":
     main()
