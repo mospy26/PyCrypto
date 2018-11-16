@@ -1,6 +1,15 @@
 from Crypto.Cipher import AES
 import configparser
 import os
+import argparse
+
+# nargs for number of args, + means a list with an error message for empty input.
+parser = argparse.ArgumentParser(prog="python3 ECB.py", description="Encrypt or decrypt an image file (jpg) using ECB mode of AES")
+parser.add_argument('-e', '--encrypt', nargs="+", type=str, help="To encrypt the following image file")
+parser.add_argument('-d', '--decrypt', type=str, nargs="+", help="To decrypt the following image file")
+parser.print_help() # print help message by default
+args = parser.parse_args()
+
 
 def get_key(config_file):
     config = configparser.ConfigParser()
