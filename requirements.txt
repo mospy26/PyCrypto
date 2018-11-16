@@ -1,0 +1,3 @@
+pycrypto
+argparse
+configparser
