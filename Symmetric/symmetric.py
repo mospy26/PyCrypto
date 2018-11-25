@@ -1,17 +1,18 @@
 from Crypto.Cipher import AES
+from Crypto.Util import Counter
 import configparser
 import sys
 import argparse
 from wand.image import Image
 
-parser = argparse.ArgumentParser(prog="python3 ECB.py", description="Encrypt or decrypt an image file (in .jpg) using AES mode.  Available options are:\nECB\nCBC")
+parser = argparse.ArgumentParser(prog="python3 symmetric.py", description="Encrypt or decrypt an image file (in .jpg) using AES mode. Available options are:\nECB\nCBC\nCTR")
 
 group = parser.add_mutually_exclusive_group(required=True)
 group.add_argument('-e', '--encrypt', dest="enc_file", nargs=1, type=str, help="To encrypt the following image file", metavar="file_to_encrypt")
 group.add_argument('-d', '--decrypt', dest="dec_file", type=str, nargs=1, help="To decrypt the following image file", metavar="file_to_decrypt")
 parser.add_argument('-o', '--output', dest="out", nargs=1, type=str, help="Output file of decryption/encryption", required=True, metavar="output_file")
 parser.add_argument('-c', '--config', dest="config_file", nargs=1, type=str, help="Config file containing key", required=True, metavar="config_file")
-parser.add_argument('-m', '--mode', dest="mode", nargs=1, type=str, help="Modes: ECB| CBC", required=True, metavar="mode")
+parser.add_argument('-m', '--mode', dest="mode", nargs=1, type=str, help="Modes: ECB| CBC| CTR", required=True, metavar="mode")
 args = parser.parse_args()
 
 pad = lambda s: s + bytes((AES.block_size - len(s) % AES.block_size) * \
@@ -24,7 +25,7 @@ def get_key(config_file):
     return config['KEY']['key']
 
 def encrypt(message, key, mode):
-    cipher = AES.new(key, mode, "This is an IV123")
+    cipher = AES.new(key, mode, IV="This is an IV123", counter=Counter.new(nbits=128))
     msg = cipher.encrypt(pad(message))
     return bytes(msg)
 
@@ -60,7 +61,7 @@ def main():
     if len(sys.argv) <= 1:
         parser.print_help()
 
-    modes = {'ECB': AES.MODE_ECB, 'CBC': AES.MODE_CBC}
+    modes = {'ECB': AES.MODE_ECB, 'CBC': AES.MODE_CBC, 'CTR': AES.MODE_CTR}
 
     if args.enc_file:
         header, tail = get_bits_from_picture(args.enc_file[0])
