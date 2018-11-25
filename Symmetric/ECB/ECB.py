@@ -1,15 +1,20 @@
 from Crypto.Cipher import AES
 import configparser
-import os
+import os, sys
 import argparse
 
-# nargs for number of args, + means a list with an error message for empty input.
 parser = argparse.ArgumentParser(prog="python3 ECB.py", description="Encrypt or decrypt an image file (in .jpg) using ECB mode of AES")
-parser.add_argument('-e', '--encrypt', dest="file_to_encrypt", nargs="+", type=str, help="To encrypt the following image file")
-parser.add_argument('-d', '--decrypt', dest="file_to_decrypt", type=str, nargs="+", help="To decrypt the following image file")
-parser.add_argument('-o', '--output', dest="output_file", nargs=1, type=str, help="Output file of decryption", required=True)
-parser.add_argument('-c', '--config', dest="config_file", nargs=1, type=str, help="Config file(s) containing key", required=True)
+
+group = parser.add_mutually_exclusive_group(required=True)
+group.add_argument('-e', '--encrypt', dest="enc_file", nargs=1, type=str, help="To encrypt the following image file", metavar="file_to_encrypt")
+group.add_argument('-d', '--decrypt', dest="dec_file", type=str, nargs=1, help="To decrypt the following image file", metavar="file_to_decrypt")
+parser.add_argument('-o', '--output', dest="out", nargs=1, type=str, help="Output file of decryption/encryption", required=True, metavar="output_file")
+parser.add_argument('-c', '--config', dest="config_file", nargs=1, type=str, help="Config file containing key", required=True, metavar="config_file")
 args = parser.parse_args()
+
+pad = lambda s: s + bytes((AES.block_size - len(s) % AES.block_size) * \
+                chr(AES.block_size - len(s) % AES.block_size).encode())
+unpad = lambda s: s[:-ord(s[len(s) - 1:])]
 
 def get_key(config_file):
     config = configparser.ConfigParser()
@@ -18,17 +23,13 @@ def get_key(config_file):
 
 def encrypt(message, key):
     cipher = AES.new(key, AES.MODE_ECB)
-    msg = cipher.encrypt(pad(message).encode()) if not isinstance(message, bytes) else cipher.encrypt(pad(message))
+    msg = cipher.encrypt(pad(message))
     return bytes(msg)
 
-def decrypt(encrypted, key):
+def decrypt(message, key):
     cipher = AES.new(key, AES.MODE_ECB)
-    dec = cipher.decrypt(encrypted).decode()
-    return dec
-
-#padding is required for ECB upto 16 bits
-def pad(string):
-    return string + ' '*(AES.block_size-len(string)%AES.block_size) if isinstance(string, str) else string + bytes((16-len(string)%16))
+    dec = unpad(cipher.decrypt(message))
+    return bytes(dec)
 
 # usually used for photos
 def get_bits_from_picture(filepath):
@@ -50,8 +51,8 @@ def store_to_file(filename, header, tail):
     with open(filename+".enc.bin", "wb") as f:
         f.write(bytes(header+tail))
 
-    #convert .bin to .png
-    os.system("convert "+filename+".enc.bin "+ filename+ ".png")
+    #convert .bin to .jpg
+    os.system("convert "+filename+".enc.bin "+filename+ ".png")
 
     # remove the bin files
     os.system("rm "+filename+".enc.bin")
@@ -59,15 +60,26 @@ def store_to_file(filename, header, tail):
 
 def main():
 
-    if args.file_to_encrypt:
-        for file in args.file_to_encrypt:
-            header, tail = get_bits_from_picture(file)
-            print("Getting the key....")
-            key = get_key(args.config_file)
-            print("Encrypting....")
-            enc = encrypt(tail, key)
-            store_to_file(args.output_file[0], header, enc)
-            print("Done!")
+    if len(sys.argv) <= 1:
+        parser.print_help()
+
+    if args.enc_file:
+        header, tail = get_bits_from_picture(args.enc_file[0])
+        print("Getting the key....")
+        key = get_key(args.config_file)
+        print("Encrypting....")
+        enc = encrypt(tail, key)
+        store_to_file(args.out[0], header, enc)
+        print("Done!")
+
+    if args.dec_file:
+        header, tail = get_bits_from_picture(args.dec_file[0])
+        print("Getting the key....")
+        key = get_key(args.config_file)
+        print("Decrypting....")
+        dec = decrypt(tail, key)
+        store_to_file(args.out[0], header, dec)
+        print("Done!")
 
 if __name__ == "__main__":
     main()
