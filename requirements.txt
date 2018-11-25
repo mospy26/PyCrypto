@@ -2,3 +2,4 @@ wheel
 pycrypto
 argparse
 configparser
+Wand

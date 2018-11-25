@@ -1,7 +1,8 @@
 from Crypto.Cipher import AES
 import configparser
-import os, sys
+import sys
 import argparse
+from wand.image import Image
 
 parser = argparse.ArgumentParser(prog="python3 ECB.py", description="Encrypt or decrypt an image file (in .jpg) using ECB mode of AES")
 
@@ -33,29 +34,24 @@ def decrypt(message, key):
 
 # usually used for photos
 def get_bits_from_picture(filepath):
-    # can only work on ppm files
-    ppm_file = os.system("convert "+filepath+" "+filepath+".ppm")
 
-    #read the data from the converted header
-    with open(filepath+".ppm", "rb") as f:
-        data = f.readlines()
+    with Image(filename=filepath) as original:
+        # ppm needed
+        original.format = 'ppm'
+        ppm_file = original.make_blob() #get binary of the image
 
-    # Note: the "convert" command can be used too!
-    header = b''.join(data[0:3]) # header of the image file not supposed to be encrypted
-    tail = b''.join(data[3:]) # tail of the file to encrypt
-    os.system("rm "+filepath+".ppm")
+    header = bytes(ppm_file[:15]) # head is 15 bytes long
+    tail = bytes(ppm_file[15:])
+
     return (header,tail)
 
-def store_to_file(filename, header, tail):
-    # write to .bin file
-    with open(filename+".enc.bin", "wb") as f:
-        f.write(bytes(header+tail))
+def store_to_file(output_file, header, tail):
 
-    #convert .bin to .jpg
-    os.system("convert "+filename+".enc.bin "+filename+ ".png")
+    f = bytes(header+tail)
 
-    # remove the bin files
-    os.system("rm "+filename+".enc.bin")
+    with Image(blob=f) as img:
+        img.convert('png')
+        img.save(filename=output_file+".png")
     return
 
 def main():
