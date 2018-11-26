@@ -1,5 +1,4 @@
 # PyCrypto
-Using the pycrypto library
 
 This is a very basic pycrypto library implemetation
 
@@ -11,10 +10,10 @@ To use this, do the following:
 ```
 
 You would need imagemagick in your computer.
-To install this in MacOS, goto the terminal and type the following commands:
+To install this in MacOS, in the terminal, execute the following commands:
 
 ```
-brew uninstall --force imagemagick
+brew uninstall --force imagemagick # if you have imagemagick you might wanna uninstall it
 brew install imagemagick@6
 echo 'export PATH="/usr/local/opt/imagemagick@6/bin:$PATH"' >> ~/.bash_profile
 brew link imagemagick@6 --force
