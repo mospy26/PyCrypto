@@ -1,6 +1,7 @@
 # PyCrypto
 
 This is a very basic pycrypto library implemetation
+This program will encrypt pictures for you.
 
 To use this, do the following:
 ```
